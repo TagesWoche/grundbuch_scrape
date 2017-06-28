@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title></title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.38.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.38.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+<style>
+
+    .mapboxgl-ctrl-compass {
+    display: none !important;
+    }
+
+    .mapboxgl-ctrl {
+        display: none;
+    }
+
+    .listing-group {
+        font: 14px/22px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        font-weight: 600;
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 1;
+        border-radius: 3px;
+        color: #fff;
+    }
+
+    .listing-group input[type=checkbox]:first-child + label {
+        border-radius: 3px 3px 0 0;
+    }
+
+    .listing-group label:last-child {
+        border-radius: 0 0 3px 3px;
+        border: none;
+    }
+
+    .listing-group input[type=checkbox] {
+        display: none;
+    }
+
+    .listing-group input[type=checkbox] + label {
+        background-color: #30a370;
+        display: block;
+        cursor: pointer;
+        padding: 10px;
+    }
+
+    .listing-group input[type=checkbox] + label {
+        background-color: #30a370;
+    }
+
+    .listing-group input[type=checkbox] + label:hover,
+    .listing-group input[type=checkbox]:checked + label {
+        background-color: #30a370;
+    }
+
+    .listing-group input[type=checkbox]:checked + label:before {
+        content: '✔';
+        margin-right: 5px;
+    }
+</style>
+<div id='map'></div>
+<nav id='listing-group' class='listing-group'>
+   <input type='checkbox' id='enableInteraction'>
+    <label for='enableInteraction'>Karte entsperren</label>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiZmVsaXhtaWNoZWwiLCJhIjoiZWZrazRjOCJ9.62fkOEqGMxFxJZPJuo2iIQ';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/felixmichel/cj4cztu9j0zwz2sqxyqmen7qa',
+    minZoom: 11,
+    center: [7.600, 47.5545913],
+    zoom: 12
+});
+
+map.on('load', function() {
+    // Add a new source from our GeoJSON data and set the
+    // 'cluster' option to true. GL-JS will add the point_count property to your source data.
+    map.addSource("grundbuch", {
+        type: "geojson",
+        data: "grundbuch_geo_match.geojson",
+        cluster: true,
+        clusterMaxZoom: 14, // Max zoom to cluster points on
+        clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+    });
+
+    map.addLayer({
+        id: "clusters",
+        type: "circle",
+        source: "grundbuch",
+        filter: ["has", "point_count"],
+        paint: {
+            "circle-color": {
+                property: "point_count",
+                type: "interval",
+                stops: [
+                    [0, "#30a370"],
+                    [50, "#71bb82"],
+                    [100, "#3dd191"],
+                    [150, "#45e7a1"],
+                ]
+            },
+            "circle-radius": {
+                property: "point_count",
+                type: "interval",
+                stops: [
+                    [0, 20],
+                    [50, 30],
+                    [100, 40],
+                    [150, 50]
+                ]
+            },
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#fff"
+        }
+    });
+
+    map.addLayer({
+        id: "cluster-count",
+        type: "symbol",
+        source: "grundbuch",
+        filter: ["has", "point_count"],
+        layout: {
+            "text-field": "{point_count_abbreviated}",
+            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+            "text-size": 12
+        }
+    });
+
+    map.addLayer({
+        id: "unclustered-point",
+        type: "circle",
+        source: "grundbuch",
+        filter: ["!has", "point_count"],
+        paint: {
+            "circle-color": "#30a370",
+            "circle-radius": 6,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#fff"
+        }
+    });
+});
+
+map['dragPan'].disable();
+map['scrollZoom'].disable();
+map['dragRotate'].disable();
+map['doubleClickZoom'].disable();
+map['boxZoom'].disable();
+map['touchZoomRotate'].disable();
+
+
+
+// disable map rotation using touch rotation gesture
+map.touchZoomRotate.disableRotation();
+
+
+// Add zoom and rotation controls to the map.
+map.addControl(new mapboxgl.NavigationControl());
+
+document.getElementById('listing-group').addEventListener('change', function(e) {
+    var handler = e.target.id;
+    var controls = document.getElementsByClassName('mapboxgl-ctrl');
+    console.log(controls)
+    if (e.target.checked) {
+        map['dragPan'].enable();
+        map['scrollZoom'].enable();
+        map['boxZoom'].enable();
+        map['touchZoomRotate'].enable();
+        controls[0].style.display = "block";
+    } else {
+        map['dragPan'].disable();
+        map['scrollZoom'].disable();
+        map['boxZoom'].disable();
+        map['touchZoomRotate'].disable();
+        controls[0].style.display = "none";
+    }
+});
+</script>
+
+</body>
+</html>
